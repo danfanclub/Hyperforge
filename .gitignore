@@ -1,0 +1,12 @@
+# Virtual environment
+ai_cluster_orchestrator/.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment variables
+.env
+
+# Log files
+*.log
