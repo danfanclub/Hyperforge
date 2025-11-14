@@ -1,5 +1,9 @@
 # Project: AI Cluster Orchestrator
 
+**CURRENT TASK: Docker Setup**
+> We are currently in the process of setting up Docker to containerize the AI server.
+> For a detailed plan and our current progress, please see [DOCKER_SETUP.md](./DOCKER_SETUP.md).
+
 ## Project Overview
 
 This project, `ai_cluster_orchestrator`, aims to create a distributed AI agent system. It allows a powerful central machine ("Titan") to orchestrate Large Language Model (LLM) tasks, delegating specialized functions to less powerful machines ("Iron Chef", "ArtforgeOG") across a local network. The system integrates web search capabilities and local file system access (via the client) to provide context-aware and tool-augmented responses.
