@@ -33,3 +33,14 @@ The primary goal is to create a portable, scalable, and easy-to-manage environme
 9.  **[Completed] Create a `hyperforge` Client Script:** Once the server is running in Docker, we will create a simple, native `hyperforge` script that can be run from any directory to interact with the AI server.
 
 10. **[Completed] Move the `hyperforge` script to a `bin` directory:** To make the `hyperforge` command globally accessible.
+
+## Current Status and Issues
+
+The Docker setup is complete, and the `hyperforge` client can interact with the orchestrator. However, there are significant issues with the tool-calling functionality:
+
+-   **LLM Not Generating Tool Calls:** Despite explicit instructions in the system prompt, the LLM (GPT-oss:20B) is not consistently generating tool calls (e.g., for `list_directory` or `web_search`).
+-   **Empty LLM Responses:** When the orchestrator *does* trigger a tool (via keyword-based triggers), and the tool output is sent back to the LLM for processing, the LLM returns an empty response. This breaks the conversational flow and prevents the orchestrator from providing a coherent answer based on tool results.
+
+**Next Steps:**
+
+The primary focus is to debug and fix the LLM's behavior regarding tool calls and response generation after tool execution. This will involve investigating Ollama's `/api/chat` endpoint and refining the system prompt and tool integration.
