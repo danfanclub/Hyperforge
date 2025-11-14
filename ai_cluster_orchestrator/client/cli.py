@@ -27,32 +27,8 @@ def send_query(prompt: str, context: dict = None, history: list = None):
         print(f"Error during request to server: {e}")
         return None
 
-def main():
-    parser = argparse.ArgumentParser(description="Interact with the AI Cluster Orchestrator.")
-    parser.add_argument("prompt", type=str, help="The prompt to send to the AI agent.")
-    parser.add_argument("--context-file", type=str, help="Path to a file to be passed as context to the agent.")
-    args = parser.parse_args()
-
-    conversation_history = []
-    current_prompt = args.prompt
-    tool_output_context = {} # To pass tool output back to the server
-
-    # Read context file if provided
-    if args.context_file:
-        try:
-            with open(args.context_file, 'r') as f:
-                tool_output_context['gemini_md_content'] = f.read()
-        except FileNotFoundError:
-            print(f"Error: Context file not found at {args.context_file}")
-            return
-        except Exception as e:
-            print(f"Error reading context file: {e}")
-            return
-
+def process_prompt(current_prompt, tool_output_context, conversation_history):
     while True:
-        print(f"\n--- User/Client Turn ---")
-        print(f"Sending prompt to Orchestrator: {current_prompt}")
-        
         # Send query with current prompt, any tool output, and history
         response_data = send_query(current_prompt, context=tool_output_context, history=conversation_history)
         tool_output_context = {} # Clear tool output context after sending
@@ -72,7 +48,7 @@ def main():
             print(f"\n--- Orchestrator Response ---")
             print(f"{response_data['response']}")
             conversation_history.append({"role": "assistant", "content": response_data['response']})
-            break # Final response received
+            return # Return to the main loop in interactive mode
 
         if response_data.get("tool_call"):
             tool_call = response_data["tool_call"]
@@ -95,6 +71,16 @@ def main():
                         tool_output = f"Error reading file {abs_path}: {e}"
                 else:
                     tool_output = "Error: 'path' argument missing for read_file tool."
+            elif tool_call["tool"] == "list_directory":
+                path = tool_call["args"].get("path", ".")
+                try:
+                    abs_path = os.path.expanduser(path)
+                    files = os.listdir(abs_path)
+                    tool_output = f"Directory listing for {abs_path}:\n" + "\n".join(files)
+                except FileNotFoundError:
+                    tool_output = f"Error: Directory not found at {abs_path}"
+                except Exception as e:
+                    tool_output = f"Error listing directory {abs_path}: {e}"
             elif tool_call["tool"] == "write_file":
                 file_path = tool_call["args"].get("path")
                 content = tool_call["args"].get("content")
@@ -122,5 +108,46 @@ def main():
             print("Orchestrator did not provide a response or tool call. Exiting.")
             break
 
+def main():
+    parser = argparse.ArgumentParser(description="Interact with the AI Cluster Orchestrator.")
+    parser.add_argument("prompt", type=str, nargs='?', default=None, help="The prompt to send to the AI agent.")
+    parser.add_argument("--context-file", type=str, help="Path to a file to be passed as context to the agent.")
+    args = parser.parse_args()
+
+    conversation_history = []
+    tool_output_context = {} # To pass tool output back to the server
+
+    # Read context file if provided
+    if args.context_file:
+        try:
+            with open(args.context_file, 'r') as f:
+                tool_output_context['gemini_md_content'] = f.read()
+        except FileNotFoundError:
+            print(f"Error: Context file not found at {args.context_file}")
+            return
+        except Exception as e:
+            print(f"Error reading context file: {e}")
+            return
+
+    if args.prompt:
+        # Single-shot mode
+        process_prompt(args.prompt, tool_output_context, conversation_history)
+    else:
+        # Interactive chat mode
+        print("Entering interactive chat mode. Type 'exit' or 'quit' to end the session.")
+        while True:
+            try:
+                current_prompt = input("You: ")
+                if current_prompt.lower() in ["exit", "quit"]:
+                    break
+                process_prompt(current_prompt, tool_output_context, conversation_history)
+            except KeyboardInterrupt:
+                print("\nExiting chat mode.")
+                break
+            except EOFError:
+                print("\nExiting chat mode.")
+                break
+
 if __name__ == "__main__":
     main()
+

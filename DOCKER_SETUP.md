@@ -22,12 +22,14 @@ The primary goal is to create a portable, scalable, and easy-to-manage environme
     *   **[Completed]** The Docker service has been started and enabled to start on boot.
     *   **[Completed]** The current user (`merlin`) has been added to the `docker` group.
 
-6.  **[Next Step] Log Out and Log Back In:** To apply the group membership changes, the user needs to log out of their current session and log back in.
+6.  **[Completed] Log Out and Log Back In:** To apply the group membership changes, the user needs to log out of their current session and log back in.
 
-7.  **[Pending] Push Docker files to GitHub:** After logging back in, run `git push` from the `/home/merlin/Documents/Hyperforge` directory to push the new Docker-related files to the GitHub repository.
+7.  **[Cancelled] Push Docker files to GitHub:** After logging back in, run `git push` from the `/home/merlin/Documents/Hyperforge` directory to push the new Docker-related files to the GitHub repository.
 
-8.  **[Pending] Build and Run the Docker Container:** After pushing the files, the next step is to run `docker-compose up --build -d` from the `/home/merlin/Documents/Hyperforge` directory to build the Docker image and start the server container in the background.
+8. **[Completed] Build and Run the Docker Container:** After pushing the files, the next step is to run `docker-compose up --build -d` from the `/home/merlin/Documents/Hyperforge` directory to build the Docker image and start the server container in the background.
 
-9.  **[Pending] Create a `hyperforge` Client Script:** Once the server is running in Docker, we will create a simple, native `hyperforge` script that can be run from any directory to interact with the AI server.
 
-10. **[Pending] Move the `hyperforge` script to a `bin` directory:** To make the `hyperforge` command globally accessible.
+
+9.  **[Completed] Create a `hyperforge` Client Script:** Once the server is running in Docker, we will create a simple, native `hyperforge` script that can be run from any directory to interact with the AI server.
+
+10. **[Completed] Move the `hyperforge` script to a `bin` directory:** To make the `hyperforge` command globally accessible.

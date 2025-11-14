@@ -1,10 +1,9 @@
-version: '3.8'
+
 
 services:
   ai-orchestrator:
     build: .
-    ports:
-      - "8000:8000"
+    network_mode: "host"
     env_file:
       - ./ai_cluster_orchestrator/.env
     volumes:

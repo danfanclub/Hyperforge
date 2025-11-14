@@ -63,6 +63,16 @@ AVAILABLE_TOOLS = {
             },
             "required": ["path", "content"]
         }
+    },
+    "list_directory": {
+        "description": "Lists the contents of a directory on the client machine.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "path": {"type": "string", "description": "The absolute or relative path to the directory on the client machine. Defaults to the current directory."}
+            },
+            "required": []
+        }
     }
 }
 
@@ -145,27 +155,30 @@ async def query_agent(request: QueryRequest):
     context = request.context
     
     # Simplified system prompt
-    system_prompt = "You are a helpful AI assistant. Please provide a clear and concise response to the user's prompt."
+    system_prompt = """You are a helpful AI assistant. You have access to the following tools:
 
-    # Keyword-based web search trigger
-    search_keywords = ["weather", "latest", "current", "news", "what is", "who is", "define"]
+- **web_search(query):** Performs a web search.
+- **read_file(path):** Reads the content of a local file.
+- **write_file(path, content):** Writes content to a local file.
+- **list_directory(path):** Lists the contents of a directory. If no path is provided, it lists the contents of the current directory.
+
+To use a tool, respond with a JSON object inside <tool_code> tags. For example:
+<tool_code>
+{"tool": "list_directory", "args": {"path": "."}}
+</tool_code>
+
+If the user asks to summarize a folder, you MUST use the `list_directory` tool to see the contents of the folder. If they do not provide a path, assume they mean the current directory and use `list_directory` with `path` set to `.`
+
+If you can answer without a tool, provide a direct response.
+"""
+
+    # Keyword-based tool triggers
+    if "summarize" in user_prompt.lower() and ("folder" in user_prompt.lower() or "directory" in user_prompt.lower()):
+        return AgentResponse(tool_call=ToolCall(tool="list_directory", args={"path": "."}))
     
-    # Perform search on the clean prompt first
+    search_keywords = ["weather", "latest", "current", "news", "what is", "who is", "define"]
     if any(keyword in user_prompt.lower() for keyword in search_keywords):
-        print(f"Keyword found in prompt. Triggering web search for: {user_prompt}")
-        try:
-            search_results = await perform_web_search(user_prompt)
-            # Now, build the full prompt with context and search results
-            full_prompt = f"You have been provided with real-time web search results. Use these results to answer the user's question. Do not say you don't have access to real-time data. Answer the question directly.\n\n--- Web Search Results ---\n{search_results}\n\n--- User's Question ---\n{user_prompt}"
-            if context:
-                for key, value in context.items():
-                    full_prompt += f"\n\n--- Context from Client ({key}) ---\n{value}"
-            
-            # Call the LLM with the augmented prompt
-            final_response = await call_ollama(user_prompt=full_prompt, system_prompt=system_prompt)
-            return AgentResponse(response=final_response)
-        except Exception as e:
-            return AgentResponse(error=f"Web search failed: {e}")
+        return AgentResponse(tool_call=ToolCall(tool="web_search", args={"query": user_prompt}))
 
     # If no keywords, proceed with a direct LLM call after adding context
     if context:
@@ -175,8 +188,13 @@ async def query_agent(request: QueryRequest):
     llm_response_content = await call_ollama(user_prompt=user_prompt, system_prompt=system_prompt)
     print(f"--- Raw LLM Response ---\n{llm_response_content}\n--------------------------")
     
-    # Since we are not expecting tool calls from the LLM anymore, we can simplify the response handling
-    return AgentResponse(response=llm_response_content)
+    # Parse the response for a tool call
+    tool_call, remaining_text = parse_ollama_response_for_tool_call(llm_response_content)
+
+    if tool_call:
+        return AgentResponse(tool_call=tool_call)
+    else:
+        return AgentResponse(response=remaining_text or llm_response_content)
 
 if __name__ == "__main__":
     import uvicorn
