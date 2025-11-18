@@ -1,0 +1,23 @@
+# NEVER commit these files - they contain secrets!
+credentials.sh
+*.key
+.env
+
+# These are generated from templates
+start_server.sh
+
+# Backup files
+*.bak
+*.backup
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
