@@ -1,10 +1,11 @@
 # GPT-OSS Local Setup with Ollama Backend
 
 This folder contains everything needed to set up a local gpt-oss-20b instance with:
-- Ollama backend for inference
-- Google Custom Search for web browsing
-- Python code execution in Docker
-- Interactive chat client
+- **Ollama backend** for inference
+- **Web search** (Google Custom Search, Exa, or You.com)
+- **Python code execution** in Docker
+- **File editing** (create, update, delete files)
+- **Interactive chat client** with automatic tool enablement
 
 ## System Requirements
 
@@ -56,14 +57,21 @@ pip install selenium wordfreq nltk quart quart-cors hypercorn
 Copy the custom files from this setup folder:
 
 ```bash
+# Navigate to this setup folder
+cd /home/merlin/Hyperforge/gpt-oss-local-setup
+
 # Copy custom Google backend
-cp custom_files/google_backend.py gpt-oss/gpt_oss/tools/simple_browser/
+cp custom_files/google_backend.py ../gpt-oss/gpt_oss/tools/simple_browser/
 
-# Copy modified Docker tool (with host networking fix)
-cp custom_files/docker_tool_patch.py gpt-oss/gpt_oss/tools/python_docker/docker_tool.py
+# Copy file editing tool
+cp custom_files/apply_patch_tool.py ../gpt-oss/gpt_oss/tools/
 
-# Copy API server modifications
-# (or manually apply the changes described in MODIFICATIONS.md)
+# Apply API server modifications
+# See MODIFICATIONS.md and custom_files/FILE_EDITING_INTEGRATION.md for details
+# You'll need to manually apply changes to:
+# - gpt_oss/responses_api/api_server.py
+# - gpt_oss/responses_api/types.py
+# - gpt_oss/tools/python_docker/docker_tool.py (host networking fix)
 ```
 
 ### 4. Configure API Keys
@@ -83,22 +91,50 @@ Fill in:
 
 ### 5. Start the Server
 
-```bash
-# Make scripts executable
-chmod +x start_server.sh
-
-# Start the server
-./start_server.sh
-```
-
-### 6. Use the Chat Client
-
-In a new terminal:
+Make sure Ollama is running (it usually runs as a service automatically):
 
 ```bash
-cd /home/merlin/Hyperforge/gpt-oss-local-setup
-./chat_client.py
+# Check if Ollama is running
+ollama ps
+
+# If not running, start it
+ollama serve
 ```
+
+Then start the Responses API server:
+
+```bash
+cd /home/merlin/Hyperforge/gpt-oss
+source .venv/bin/activate
+
+# Start with Ollama backend (IMPORTANT: specify model name)
+python -m gpt_oss.responses_api.serve \
+    --inference-backend ollama \
+    --checkpoint gpt-oss:20b \
+    --port 8000
+```
+
+### 6. Use the Enhanced Chat Client
+
+In a new terminal, navigate to your working directory and start the chat:
+
+```bash
+# Navigate to where you want to work (model can edit files here)
+cd ~/Documents/my-project
+
+# Start the chat client (from anywhere)
+python /home/merlin/Hyperforge/gpt-oss-local-setup/gpt-oss-chat.py
+
+# Or if you've set up the wrapper script:
+gpt-oss-chat
+```
+
+**Features**:
+- 🔍 **Automatic web search** - Model can search the web for information
+- 📝 **Automatic file editing** - Model can create/update/delete files in current directory
+- 💬 **Conversation history** - Maintains context across the chat
+- 🎨 **Color-coded output** - Easy-to-read terminal UI
+- ⚡ **Commands**: `/exit`, `/clear`, `/history`, `/help`
 
 ## Getting API Keys
 
@@ -123,10 +159,13 @@ cd /home/merlin/Hyperforge/gpt-oss-local-setup
 - **`SETUP_INSTRUCTIONS_FOR_LLM.md`** - Detailed instructions for automated setup by an LLM
 - **`credentials.template.sh`** - Template for API keys (edit and rename to credentials.sh)
 - **`start_server.template.sh`** - Template for server startup script
-- **`chat_client.py`** - Interactive chat client
+- **`gpt-oss-chat.py`** - **NEW** Enhanced interactive chat client with file editing and web search
+- **`chat_client.py`** - Original basic chat client (deprecated)
 - **`custom_files/`** - Custom code modifications
+  - `apply_patch_tool.py` - **NEW** File editing tool implementation
+  - `FILE_EDITING_INTEGRATION.md` - **NEW** Documentation for file editing setup
   - `google_backend.py` - Google Custom Search integration
-  - `docker_tool_patch.py` - Docker networking fix
+  - `DOCKER_FIX.md` - Docker networking fix documentation
 - **`MODIFICATIONS.md`** - Documentation of all code changes made
 
 ## Security Notes

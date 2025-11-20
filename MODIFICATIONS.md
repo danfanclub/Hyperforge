@@ -185,6 +185,56 @@ rm gpt_oss/tools/simple_browser/google_backend.py
 export BROWSER_BACKEND="exa"
 ```
 
+### 4. File Editing Tool (apply_patch)
+
+**Files Created**:
+- `gpt_oss/tools/apply_patch_tool.py`
+
+**Files Modified**:
+- `gpt_oss/responses_api/types.py`
+- `gpt_oss/responses_api/api_server.py`
+
+**Purpose**: Enable the model to create, update, and delete files using a structured patch format.
+
+**Key Features**:
+- Create new files with `*** Add File:`
+- Update existing files with hunks (`*** Update File:`)
+- Delete files with `*** Delete File:`
+- Rename files with `*** Move to:`
+- Works through Responses API
+- No additional dependencies required
+
+**Usage**:
+```python
+{
+    "input": "Create a README.md file",
+    "tools": [{"type": "file_editing"}],  # or "apply_patch"
+    "max_output_tokens": 4096
+}
+```
+
+**Code Location**: `custom_files/apply_patch_tool.py`
+
+**Documentation**: `custom_files/FILE_EDITING_INTEGRATION.md`
+
+**Changes Required**:
+
+1. **types.py** - Add `FileEditingToolConfig` class and include in Union type
+2. **api_server.py** - Multiple changes:
+   - Import `ApplyPatchTool`
+   - Update `is_not_builtin_tool()` function
+   - Add tool detection and initialization
+   - Add tool execution in streaming loop
+   - Add instructions and tool config to developer message
+
+**Installation**:
+```bash
+cp custom_files/apply_patch_tool.py gpt-oss/gpt_oss/tools/
+# Then apply api_server.py and types.py changes per FILE_EDITING_INTEGRATION.md
+```
+
+---
+
 ## Future Enhancements
 
 Potential improvements to consider:
@@ -194,3 +244,5 @@ Potential improvements to consider:
 3. **Fallback**: Auto-switch to alternative backend if quota exceeded
 4. **Enhanced Scraping**: Use Selenium for JavaScript-heavy sites
 5. **Local Model for Query Refinement**: Replace OpenAI dependency in llmsearch with local gpt-oss
+6. **File Operation Safety**: Add path validation and sandboxing for apply_patch tool
+7. **Interactive Chat Client**: Enhanced terminal UI with better tool visualization
